@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#111827" />
+  <title>Administración | Wilyu Market</title>
+  <style>
+    html,body{margin:0;width:100%;height:100%;background:#f8fafc;font-family:Arial,sans-serif}
+    #app{width:100%;height:100%;border:0;display:block}
+    #loading{position:fixed;inset:0;display:grid;place-items:center;background:#f8fafc;color:#111827;z-index:2;text-align:center;padding:24px}
+    #loading strong{display:block;font-size:20px;margin-bottom:8px}#loading span{font-size:13px;color:#6b7280}
+  </style>
+</head>
+<body>
+  <div id="loading"><div><strong>Wilyu Market</strong><span>Abriendo administración segura...</span></div></div>
+  <iframe id="app" src="/"></iframe>
+  <script>
+    const frame=document.getElementById('app');
+    const loading=document.getElementById('loading');
+    let attempts=0;
+    function openAdmin(){
+      attempts++;
+      try{
+        const doc=frame.contentDocument||frame.contentWindow.document;
+        const btn=doc.querySelector('.admin-link');
+        if(btn){
+          btn.click();
+          setTimeout(()=>{loading.style.display='none'},250);
+          return;
+        }
+      }catch(e){}
+      if(attempts<80)setTimeout(openAdmin,100);
+      else loading.innerHTML='<div><strong>No se pudo abrir automáticamente.</strong><span>Recarga esta página e inténtalo de nuevo.</span></div>';
+    }
+    frame.addEventListener('load',()=>setTimeout(openAdmin,150));
+  </script>
+</body>
+</html>
