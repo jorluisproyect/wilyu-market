@@ -47,6 +47,7 @@ export async function uploadProductImage(file:File, productId:string) {
   return {data:{path,publicUrl:data.publicUrl},error:null}
 }
 
+
 export async function adminGetCategories() {
   return supabase.from('categories').select('*').order('name')
 }
@@ -123,6 +124,7 @@ export async function uploadAndAttachProductImage(file:File, productId:string) {
   if (attached.error) return { data:null, error:attached.error }
   return { data:{ publicUrl: uploaded.data.publicUrl }, error:null }
 }
+
 
 export const adminGetProviders = () =>
   supabase.from('providers').select('*').order('created_at', { ascending:false })

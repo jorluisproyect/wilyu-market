@@ -1,0 +1,8 @@
+admin auth: True
+role admin: True
+save product: True
+upload image: True
+delete product: True
+create category: True
+delete category: True
+remote catalog: True

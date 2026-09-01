@@ -1,0 +1,24 @@
+VERIFICACIÓN V5.1
+{
+  "Iniciar sesión": true,
+  "Regístrate": true,
+  "account route": true,
+  "CustomerRegister": true,
+  "Historial de pedidos": true
+}
+
+BUILD:
+exit=1
+
+> wilyu-market@1.0.0 build
+> tsc -b && vite build
+
+src/App.tsx(1,46): error TS2307: Cannot find module 'react' or its corresponding type declarations.
+src/App.tsx(2,444): error TS2307: Cannot find module 'lucide-react' or its corresponding type declarations.
+src/App.tsx(29,9): error TS2875: This JSX tag requires the module path 'react/jsx-runtime' to exist, but none could be found. Make sure you have types for the appropriate package installed.
+src/main.tsx(1,19): error TS2307: Cannot find module 'react' or its corresponding type declarations.
+src/main.tsx(2,22): error TS2307: Cannot find module 'react-dom/client' or its corresponding type declarations.
+src/main.tsx(7,3): error TS2875: This JSX tag requires the module path 'react/jsx-runtime' to exist, but none could be found. Make sure you have types for the appropriate package installed.
+vite.config.ts(1,30): error TS2307: Cannot find module 'vite' or its corresponding type declarations.
+vite.config.ts(2,19): error TS2307: Cannot find module '@vitejs/plugin-react' or its corresponding type declarations.
+

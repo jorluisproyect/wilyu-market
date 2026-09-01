@@ -1,0 +1,5 @@
+package: True
+supabase dependency: True
+supabase client: True
+api: True
+app status: True

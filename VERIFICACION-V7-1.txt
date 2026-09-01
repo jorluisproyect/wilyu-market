@@ -1,0 +1,5 @@
+JSX onSubmit corregido: True
+Supabase Auth admin: True
+Guardar producto Supabase: True
+Subida a Storage: True
+Catálogo remoto: True

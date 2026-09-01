@@ -1,0 +1,8 @@
+remote order create: True
+remote tracking: True
+providers Supabase: True
+payments Supabase: True
+rates Supabase: True
+customer signup: True
+customer login: True
+admin order status: True
