@@ -249,14 +249,3 @@ export async function updateProfile(input:{full_name:string;phone:string;address
     updated_at:new Date().toISOString()
   }).eq('id',user.id).select().single()
 }
-
-
-export async function deleteOrderRemote(id:string){
- const itemsRes=await supabase.from('order_items').delete().eq('order_id',id)
- if(itemsRes.error)return {data:null,error:itemsRes.error}
-
- const orderRes=await supabase.from('orders').delete().eq('id',id).select().single()
- if(orderRes.error)return {data:null,error:orderRes.error}
-
- return {data:orderRes.data,error:null}
-}

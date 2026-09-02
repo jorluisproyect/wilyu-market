@@ -10,13 +10,13 @@ import {
   adminGetProviders, createProvider, deleteProvider,
   adminGetPaymentMethods, savePaymentMethod, deletePaymentMethod,
   getRates, saveRates, createOrderRemote, adminGetOrders, updateOrderStatus,
-  trackOrder, signUp, getProfile, updateProfile, getAuthUser, deleteOrderRemote
+  trackOrder, signUp, getProfile, updateProfile, getAuthUser
 } from './lib/wilyuApi'
 
 type View='store'|'product'|'cart'|'checkout'|'success'|'track'|'account'|'admin'
 type AccountMode='login'|'register'|'profile'
 interface CustomerAccount{id:string;name:string;email:string;phone:string;address:string;password:string;createdAt:string}
-type AdminTab='dashboard'|'products'|'orders'|'history'|'categories'|'providers'|'payments'|'currencies'
+type AdminTab='dashboard'|'products'|'orders'|'categories'|'providers'|'payments'|'currencies'
 const WA='584125427074'
 const countryCodes=[
  {code:'+58',name:'Venezuela 🇻🇪'},
@@ -197,22 +197,10 @@ function mapOrder(row:any):Order{
   phone:row.phone,
   address:row.address||'',
   notes:row.notes||'',
-  items:(row.order_items||[]).map((i:any)=>({
-   productId:i.product_id||'',
-   quantity:Number(i.quantity||1),
-   productName:i.product_name||'Producto',
-   unitPrice:Number(i.unit_price||0),
-   lineTotal:Number(i.line_total||0)
-  })) as any,
+  items:(row.order_items||[]).map((i:any)=>({productId:i.product_id||'',quantity:Number(i.quantity||1)})),
   total:Number(row.total||0),
   status:row.status,
-  createdAt:row.created_at,
-  ...({
-   remoteId:row.id,
-   paymentMethodId:row.payment_method_id||'',
-   paymentReference:row.payment_reference||'',
-   paymentStatus:row.payment_status||''
-  } as any)
+  createdAt:row.created_at
  }
 }
 function ratesFromRows(rows:any[]):CurrencySettings{
@@ -418,15 +406,14 @@ function Admin(props:any){
    setProducts((x:Product[])=>p.id?x.map(a=>a.id===p.id?p:a):[{...p,id:uid('prod'),createdAt:new Date().toISOString()},...x]);setEdit(null)
   }}/>
  else if(tab==='products')body=<Products products={products} categories={categories} remote={remote} add={()=>setEdit(emptyProduct())} edit={setEdit}/>
- else if(tab==='orders')body=<Orders orders={orders} setOrders={setOrders} products={products} payments={payments} remote={remote}/>
- else if(tab==='history')body=<Orders orders={orders} setOrders={setOrders} products={products} payments={payments} remote={remote} history/>
+ else if(tab==='orders')body=<Orders orders={orders} setOrders={setOrders} remote={remote}/>
  else if(tab==='categories')body=<Categories categories={categories} setCategories={setCategories} remote={remote} refresh={refreshCategories}/>
  else if(tab==='providers')body=<Providers providers={providers} setProviders={setProviders} remote={remote}/>
  else if(tab==='payments')body=<Payments payments={payments} setPayments={setPayments} remote={remote}/>
  else if(tab==='currencies')body=<Currencies cs={currencies} setCs={setCurrencies} remote={remote}/>
- else body=<Dashboard products={products} orders={orders} goOrders={()=>setTab('orders')}/>
+ else body=<Dashboard products={products} orders={orders}/>
 
- return <div className="admin-shell"><aside className={`admin-sidebar ${side?'open':''}`}><div className="admin-brand"><img src="/wilyu-logo.svg"/><div><strong>Wilyu Market</strong><span>Administración segura</span></div></div><nav>{nav('dashboard','Resumen',<LayoutDashboard/>)}{nav('products','Productos',<Boxes/>)}{nav('orders','Pedidos',<ClipboardList/>)}{nav('history','Histórico de pedidos',<History/>)}{nav('categories','Categorías',<Tags/>)}{nav('providers','Proveedores',<Users/>)}{nav('payments','Métodos de pago',<WalletCards/>)}{nav('currencies','Monedas y tasas',<RefreshCcw/>)}</nav><div className="admin-sidebar-bottom"><button onClick={exit}><Eye/> Ver tienda</button><button onClick={async()=>{await signOut();setOk(false)}}><LogOut/> Salir</button></div></aside>{side&&<button className="sidebar-overlay" onClick={()=>setSide(false)}/>}<div className="admin-main"><header className="admin-top"><button className="icon-button admin-menu-button" onClick={()=>setSide(true)}><Menu/></button><div><strong>Panel de control</strong><span>{remote?'Supabase conectado':'Modo local'}</span></div><button className="store-preview" onClick={exit}><Store/> Ver tienda</button></header><main className="admin-content">{body}</main></div></div>
+ return <div className="admin-shell"><aside className={`admin-sidebar ${side?'open':''}`}><div className="admin-brand"><img src="/wilyu-logo.svg"/><div><strong>Wilyu Market</strong><span>Administración segura</span></div></div><nav>{nav('dashboard','Resumen',<LayoutDashboard/>)}{nav('products','Productos',<Boxes/>)}{nav('orders','Pedidos',<ClipboardList/>)}{nav('categories','Categorías',<Tags/>)}{nav('providers','Proveedores',<Users/>)}{nav('payments','Métodos de pago',<WalletCards/>)}{nav('currencies','Monedas y tasas',<RefreshCcw/>)}</nav><div className="admin-sidebar-bottom"><button onClick={exit}><Eye/> Ver tienda</button><button onClick={async()=>{await signOut();setOk(false)}}><LogOut/> Salir</button></div></aside>{side&&<button className="sidebar-overlay" onClick={()=>setSide(false)}/>}<div className="admin-main"><header className="admin-top"><button className="icon-button admin-menu-button" onClick={()=>setSide(true)}><Menu/></button><div><strong>Panel de control</strong><span>{remote?'Supabase conectado':'Modo local'}</span></div><button className="store-preview" onClick={exit}><Store/> Ver tienda</button></header><main className="admin-content">{body}</main></div></div>
 }
 
 function Login({enter,back}:any){
@@ -442,7 +429,7 @@ function Login({enter,back}:any){
  }}><img src="/wilyu-logo.svg"/><h1>Administración</h1><p>Acceso seguro con Supabase Auth.</p><label>Correo<input type="email" value={e} onChange={x=>se(x.target.value)}/></label><label>Contraseña<input type="password" value={p} onChange={x=>sp(x.target.value)}/></label>{err&&<div className="form-error">{err}</div>}<button className="primary-button full" disabled={busy}>{busy?'Entrando...':'Entrar'}</button><small>Solo las cuentas con rol admin pueden modificar la tienda.</small></form></div>
 }
 
-function Dashboard({products,orders,goOrders}:any){return <><div className="admin-page-head"><div><span className="mini-title">Hoy</span><h1>Resumen</h1></div></div><div className="stats-grid"><div className="stat-card"><Boxes/><div><span>Productos</span><strong>{products.length}</strong></div></div><button type="button" className="stat-card" onClick={goOrders} style={{cursor:'pointer',textAlign:'left',border:'none',width:'100%'}} title="Ir a pedidos"><ClipboardList/><div><span>Pedidos</span><strong>{orders.filter((o:Order)=>o.status!=='delivered').length}</strong><small style={{display:'block',marginTop:4}}>Ver pedidos →</small></div></button><div className="stat-card"><DollarSign/><div><span>Ventas</span><strong>{money(orders.reduce((a:number,o:Order)=>a+o.total,0))}</strong></div></div><div className="stat-card"><TrendingUp/><div><span>Activos</span><strong>{products.filter((p:Product)=>p.status!=='hidden').length}</strong></div></div></div></>}
+function Dashboard({products,orders}:any){return <><div className="admin-page-head"><div><span className="mini-title">Hoy</span><h1>Resumen</h1></div></div><div className="stats-grid"><div className="stat-card"><Boxes/><div><span>Productos</span><strong>{products.length}</strong></div></div><div className="stat-card"><ClipboardList/><div><span>Pedidos</span><strong>{orders.length}</strong></div></div><div className="stat-card"><DollarSign/><div><span>Ventas</span><strong>{money(orders.reduce((a:number,o:Order)=>a+o.total,0))}</strong></div></div><div className="stat-card"><TrendingUp/><div><span>Activos</span><strong>{products.filter((p:Product)=>p.status!=='hidden').length}</strong></div></div></div></>}
 function Products({products,categories,remote,add,edit}:any){return <><div className="admin-page-head"><div><span className="mini-title">Catálogo {remote?'· Supabase':'· Local'}</span><h1>Productos</h1></div><button className="primary-button" onClick={add}><Plus/> Nuevo producto</button></div><div className="admin-panel table-panel">{products.map((p:Product)=>{const[s,c]=status(p.status);return <div className="product-admin-row" key={p.id}><img src={p.image||'/wilyu-logo.svg'}/><div className="admin-product-main"><strong>{p.name}</strong><span>{categories.find((x:Category)=>x.id===p.categoryId)?.name} · {ownText[p.ownershipType]}</span></div><div className="admin-money"><span>Venta</span><strong>{money(p.salePrice)}</strong></div><div className="admin-money hide-mobile"><span>Ganancia/u.</span><strong>{money(p.salePrice-p.cost)}</strong></div><span className={`status-pill static ${c}`}>{s}</span><button className="edit-button" onClick={()=>edit(p)}><Pencil/> Editar</button></div>})}{products.length===0&&<div className="mini-empty">No hay productos todavía. Crea el primero desde este panel.</div>}</div></>}
 function Editor({p0,categories,providers,back,save,del,remote}:any){
  const[p,setP]=useState<Product>({...p0}),[mode,setMode]=useState<'margin'|'final'>('margin'),[file,setFile]=useState<File|undefined>(undefined),[saving,setSaving]=useState(false)
@@ -454,127 +441,21 @@ function Editor({p0,categories,providers,back,save,del,remote}:any){
  <div className="editor-grid"><section className="admin-panel form-section"><h3>Información</h3><div className="form-grid"><label className="full-field">Nombre<input value={p.name} onChange={e=>setP({...p,name:e.target.value})}/></label><label>Categoría<select value={p.categoryId} onChange={e=>setP({...p,categoryId:e.target.value})}>{categories.map((c:Category)=><option key={c.id} value={c.id}>{c.emoji} {c.name}</option>)}</select></label><label>Estado<select value={p.status} onChange={e=>setP({...p,status:e.target.value as ProductStatus})}><option value="available">Disponible</option><option value="preorder">Por encargo</option><option value="soldout">Agotado</option><option value="hidden">Oculto</option></select></label><label className="full-field">Descripción<textarea value={p.description} onChange={e=>setP({...p,description:e.target.value})}/></label><label className="full-field">Cargar foto<div className="upload-box">{p.image?<img src={p.image}/>:<ImagePlus/>}<div><input type="file" accept="image/jpeg,image/png,image/webp" onChange={upload}/><small>{remote?'La foto se subirá a Supabase Storage al guardar.':'Foto local de prueba.'}</small></div></div></label><label className="full-field">Tiempo de entrega<input value={p.deliveryText} onChange={e=>setP({...p,deliveryText:e.target.value})}/></label></div></section><section className="admin-panel form-section pricing-panel"><h3>Precio y ganancia · Privado</h3><div className="pricing-mode"><button type="button" className={mode==='margin'?'active':''} onClick={()=>setMode('margin')}>% ganancia</button><button type="button" className={mode==='final'?'active':''} onClick={()=>setMode('final')}>Precio final</button></div><label>Costo ($)<input type="number" step=".01" value={p.cost} onChange={e=>cost(Number(e.target.value))}/></label>{mode==='margin'?<label>Ganancia (%)<div className="margin-input-row"><input type="number" value={p.marginPercent} onChange={e=>margin(Number(e.target.value))}/><button type="button" onClick={()=>margin(30)}>30%</button></div></label>:<label>Venta ($)<input type="number" step=".01" value={p.salePrice} onChange={e=>setP({...p,salePrice:Number(e.target.value)})}/></label>}<div className="profit-preview"><div><span>Venta</span><strong>{money(p.salePrice)}</strong></div><div><span>Ganancia</span><strong>{money(p.salePrice-p.cost)}</strong></div></div></section><section className="admin-panel form-section"><h3>Origen</h3><label>Tipo<select value={p.ownershipType} onChange={e=>setP({...p,ownershipType:e.target.value as OwnershipType})}><option value="own">Propio</option><option value="supplier">Proveedor</option><option value="thirdparty">Tercero</option></select></label><label>Proveedor<select value={p.providerId||''} onChange={e=>setP({...p,providerId:e.target.value})}><option value="">Sin proveedor</option>{providers.map((x:Provider)=><option key={x.id} value={x.id}>{x.name}</option>)}</select></label></section></div>
  </form>
 }
-function Orders({orders,setOrders,products,payments,remote,history=false}:any){
- const [loading,setLoading]=useState(false)
- const [openId,setOpenId]=useState<string|null>(null)
-
- const refresh=async()=>{
-  if(!remote)return
-  setLoading(true)
-  const r=await adminGetOrders()
-  if(!r.error)setOrders((r.data||[]).map(mapOrder))
-  else alert('No se pudieron cargar los pedidos: '+r.error.message)
-  setLoading(false)
- }
-
- useEffect(()=>{refresh()},[remote])
-
- const visible=(orders as Order[]).filter((o:Order)=>history?o.status==='delivered':o.status!=='delivered')
-
+function Orders({orders,setOrders,remote}:any){
+ const[loading,setLoading]=useState(false)
+ useEffect(()=>{if(!remote)return;setLoading(true);adminGetOrders().then(r=>{if(!r.error)setOrders((r.data||[]).map(mapOrder));setLoading(false)})},[remote])
  const change=async(o:Order,s:OrderStatus)=>{
   if(remote){
-   let rowId=(o as any).remoteId
-   if(!rowId){
-    const all=await adminGetOrders()
-    rowId=(all.data||[]).find((x:any)=>x.order_code===o.id)?.id
-   }
-   if(!rowId){alert('No se encontró el pedido.');return}
-   const r=await updateOrderStatus(rowId,s)
-   if(r.error){alert('No se pudo cambiar el estado: '+r.error.message);return}
+   const all=await adminGetOrders()
+   const row=(all.data||[]).find((x:any)=>x.order_code===o.id)
+   if(!row){alert('No se encontró el pedido.');return}
+   const r=await updateOrderStatus(row.id,s)
+   if(r.error){alert(r.error.message);return}
   }
-  setOrders((xs:Order[])=>xs.map(x=>x.id===o.id?{...x,status:s}:x))
-  alert('✅ Estado del pedido actualizado.')
+  setOrders((x:Order[])=>x.map(a=>a.id===o.id?{...a,status:s}:a))
+  alert('✅ Estado del pedido actualizado con éxito.')
  }
-
- const remove=async(o:Order)=>{
-  if(!confirm('¿Eliminar definitivamente el pedido '+o.id+'? Esta acción no se puede deshacer.'))return
-  if(remote){
-   let rowId=(o as any).remoteId
-   if(!rowId){
-    const all=await adminGetOrders()
-    rowId=(all.data||[]).find((x:any)=>x.order_code===o.id)?.id
-   }
-   if(!rowId){alert('No se encontró el pedido.');return}
-   const r=await deleteOrderRemote(rowId)
-   if(r.error){alert('No se pudo eliminar el pedido: '+r.error.message);return}
-  }
-  setOrders((xs:Order[])=>xs.filter(x=>x.id!==o.id))
-  alert('✅ Pedido eliminado.')
- }
-
- const payName=(o:Order)=>{
-  const id=(o as any).paymentMethodId
-  return payments?.find((p:PaymentMethod)=>p.id===id)?.name||'No disponible'
- }
- const productName=(item:any)=>item.productName||products?.find((p:Product)=>p.id===item.productId)?.name||'Producto'
- const unitPrice=(item:any)=>{
-  const stored=Number(item.unitPrice||0)
-  if(stored>0)return stored
-  return Number(products?.find((p:Product)=>p.id===item.productId)?.salePrice||0)
- }
-
- return <><div className="admin-page-head"><div>
-  <span className="mini-title">{history?'PEDIDOS FINALIZADOS':'PEDIDOS ACTIVOS'} · {remote?'SUPABASE':'LOCAL'}</span>
-  <h1>{history?'Histórico de pedidos':'Pedidos'}</h1>
-  <p>{history?'Aquí se conservan los pedidos marcados como Entregado.':'Haz clic en Ver detalle para revisar exactamente qué pidió cada cliente.'}</p>
- </div><button className="secondary-button" onClick={refresh}><RefreshCcw size={17}/> Actualizar</button></div>
-
- {loading?<div className="mini-empty">Cargando pedidos...</div>:
- visible.length===0?<div className="mini-empty">{history?'Todavía no hay pedidos finalizados.':'No hay pedidos activos.'}</div>:
- <div className="order-admin-grid">{visible.map((o:Order)=>{
-  const expanded=openId===o.id
-  return <article className="admin-panel order-card" key={o.id}>
-   <div className="order-card-head">
-    <div><strong>{o.id}</strong><span>{o.customerName} · {o.phone}</span><small>{new Date(o.createdAt).toLocaleString('es-VE')}</small></div>
-    <b>{money(o.total)}</b>
-   </div>
-
-   <div style={{display:'flex',gap:10,flexWrap:'wrap',alignItems:'end'}}>
-    <label style={{flex:'1 1 230px'}}>Estado
-     <select value={o.status} onChange={e=>change(o,e.target.value as OrderStatus)}>
-      {steps.map(s=><option value={s} key={s}>{orderText[s]}</option>)}
-     </select>
-    </label>
-    <button className="edit-button" onClick={()=>setOpenId(expanded?null:o.id)} style={{cursor:'pointer'}}>
-     <Eye size={17}/> {expanded?'Ocultar detalle':'Ver detalle'}
-    </button>
-    <button className="delete-button-small" onClick={()=>remove(o)} style={{cursor:'pointer'}}>
-     <Trash2 size={17}/> Eliminar
-    </button>
-   </div>
-
-   {expanded&&<div style={{marginTop:18,borderTop:'1px solid #e5e7eb',paddingTop:18}}>
-    <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))',gap:14,marginBottom:18}}>
-     <div><small>Número de pedido</small><strong style={{display:'block'}}>{o.id}</strong></div>
-     <div><small>Fecha y hora</small><strong style={{display:'block'}}>{new Date(o.createdAt).toLocaleString('es-VE')}</strong></div>
-     <div><small>Cliente</small><strong style={{display:'block'}}>{o.customerName}</strong></div>
-     <div><small>WhatsApp</small><strong style={{display:'block'}}>{o.phone}</strong></div>
-     <div><small>Dirección / zona</small><strong style={{display:'block'}}>{o.address||'No indicada'}</strong></div>
-     <div><small>Método de pago</small><strong style={{display:'block'}}>{payName(o)}</strong></div>
-     <div><small>Referencia</small><strong style={{display:'block'}}>{(o as any).paymentReference||'No indicada'}</strong></div>
-     <div><small>Total</small><strong style={{display:'block'}}>{money(o.total)}</strong></div>
-    </div>
-
-    <h3 style={{margin:'0 0 10px'}}>Productos solicitados</h3>
-    <div style={{display:'grid',gap:8}}>
-     {(o.items as any[]).map((item:any,index:number)=>{
-      const price=unitPrice(item)
-      const subtotal=Number(item.lineTotal||price*Number(item.quantity||1))
-      return <div key={index} style={{display:'grid',gridTemplateColumns:'minmax(0,1fr) auto auto',gap:14,alignItems:'center',padding:'11px 0',borderBottom:'1px solid #f0f0f0'}}>
-       <div><strong>{productName(item)}</strong></div>
-       <span>{item.quantity} × {money(price)}</span>
-       <strong>{money(subtotal)}</strong>
-      </div>
-     })}
-    </div>
-
-    {o.notes&&<div style={{marginTop:14,padding:12,background:'#f8fafc',borderRadius:10}}>
-     <small>Notas del cliente</small><p style={{margin:'5px 0 0'}}>{o.notes}</p>
-    </div>}
-   </div>}
-  </article>
- })}</div>}
- </>
+ return <><div className="admin-page-head"><div><span className="mini-title">{remote?'Supabase · Tiempo real al recargar':'Local'}</span><h1>Pedidos</h1></div></div>{loading?<div className="mini-empty">Cargando pedidos...</div>:<div className="order-admin-grid">{orders.map((o:Order)=><article className="admin-panel order-card" key={o.id}><div className="order-card-head"><div><strong>{o.id}</strong><span>{o.customerName} · {o.phone}</span></div><b>{money(o.total)}</b></div><label>Estado<select value={o.status} onChange={e=>change(o,e.target.value as OrderStatus)}>{steps.map(s=><option value={s} key={s}>{orderText[s]}</option>)}</select></label></article>)}</div>}</>
 }
 
 function Categories({categories,setCategories,remote,refresh}:any){
