@@ -450,14 +450,7 @@ function Editor({p0,categories,providers,back,save,del,remote}:any){
  const margin=(n:number)=>setP(x=>({...x,marginPercent:n,salePrice:Number((x.cost*(1+n/100)).toFixed(2))}))
  const upload=(e:any)=>{const f=e.target.files?.[0];if(!f)return;if(f.size>5000000){alert('Imagen máxima 5 MB.');return}setFile(f);setP(x=>({...x,image:URL.createObjectURL(f)}))}
  return <form onSubmit={async e=>{e.preventDefault();if(!p.name)return;setSaving(true);try{await save(p,file)}finally{setSaving(false)}}}>
- <div className="admin-page-head"><div><button type="button" className="back-button" onClick={back}><ArrowLeft/> Volver</button><h1>{p.id?'Editar':'Nuevo'} producto</h1></div><div className="editor-actions">{del&&<button
- type="button"
- className="delete-button-small"
- onClick={()=>{if(confirm('¿Seguro que quiere eliminar este producto? Esta acción no se puede deshacer.'))del()}}
- title="Eliminar producto"
- aria-label="Eliminar producto"
- style={{width:38,height:38,padding:0,display:'inline-flex',alignItems:'center',justifyContent:'center'}}
-><Trash2 size={17}/></button>}<button className="primary-button" disabled={saving}><Save/> {saving?'Guardando...':'Guardar'}</button></div></div>
+ <div className="admin-page-head"><div><button type="button" className="back-button" onClick={back}><ArrowLeft/> Volver</button><h1>{p.id?'Editar':'Nuevo'} producto</h1></div><div className="editor-actions">{del&&<button type="button" className="delete-button-small" onClick={del}><Trash2/></button>}<button className="primary-button" disabled={saving}><Save/> {saving?'Guardando...':'Guardar'}</button></div></div>
  <div className="editor-grid"><section className="admin-panel form-section"><h3>Información</h3><div className="form-grid"><label className="full-field">Nombre<input value={p.name} onChange={e=>setP({...p,name:e.target.value})}/></label><label>Categoría<select value={p.categoryId} onChange={e=>setP({...p,categoryId:e.target.value})}>{categories.map((c:Category)=><option key={c.id} value={c.id}>{c.emoji} {c.name}</option>)}</select></label><label>Estado<select value={p.status} onChange={e=>setP({...p,status:e.target.value as ProductStatus})}><option value="available">Disponible</option><option value="preorder">Por encargo</option><option value="soldout">Agotado</option><option value="hidden">Oculto</option></select></label><label className="full-field">Descripción<textarea value={p.description} onChange={e=>setP({...p,description:e.target.value})}/></label><label className="full-field">Cargar foto<div className="upload-box">{p.image?<img src={p.image}/>:<ImagePlus/>}<div><input type="file" accept="image/jpeg,image/png,image/webp" onChange={upload}/><small>{remote?'La foto se subirá a Supabase Storage al guardar.':'Foto local de prueba.'}</small></div></div></label><label className="full-field">Tiempo de entrega<input value={p.deliveryText} onChange={e=>setP({...p,deliveryText:e.target.value})}/></label></div></section><section className="admin-panel form-section pricing-panel"><h3>Precio y ganancia · Privado</h3><div className="pricing-mode"><button type="button" className={mode==='margin'?'active':''} onClick={()=>setMode('margin')}>% ganancia</button><button type="button" className={mode==='final'?'active':''} onClick={()=>setMode('final')}>Precio final</button></div><label>Costo ($)<input type="number" step=".01" value={p.cost} onChange={e=>cost(Number(e.target.value))}/></label>{mode==='margin'?<label>Ganancia (%)<div className="margin-input-row"><input type="number" value={p.marginPercent} onChange={e=>margin(Number(e.target.value))}/><button type="button" onClick={()=>margin(30)}>30%</button></div></label>:<label>Venta ($)<input type="number" step=".01" value={p.salePrice} onChange={e=>setP({...p,salePrice:Number(e.target.value)})}/></label>}<div className="profit-preview"><div><span>Venta</span><strong>{money(p.salePrice)}</strong></div><div><span>Ganancia</span><strong>{money(p.salePrice-p.cost)}</strong></div></div></section><section className="admin-panel form-section"><h3>Origen</h3><label>Tipo<select value={p.ownershipType} onChange={e=>setP({...p,ownershipType:e.target.value as OwnershipType})}><option value="own">Propio</option><option value="supplier">Proveedor</option><option value="thirdparty">Tercero</option></select></label><label>Proveedor<select value={p.providerId||''} onChange={e=>setP({...p,providerId:e.target.value})}><option value="">Sin proveedor</option>{providers.map((x:Provider)=><option key={x.id} value={x.id}>{x.name}</option>)}</select></label></section></div>
  </form>
 }
@@ -494,7 +487,7 @@ function Orders({orders,setOrders,products,payments,remote,history=false}:any){
  }
 
  const remove=async(o:Order)=>{
-  if(!confirm('¿Seguro que quiere eliminar este pedido '+o.id+'? Esta acción no se puede deshacer.'))return
+  if(!confirm('¿Eliminar definitivamente el pedido '+o.id+'? Esta acción no se puede deshacer.'))return
   if(remote){
    let rowId=(o as any).remoteId
    if(!rowId){
@@ -545,14 +538,8 @@ function Orders({orders,setOrders,products,payments,remote,history=false}:any){
     <button className="edit-button" onClick={()=>setOpenId(expanded?null:o.id)} style={{cursor:'pointer'}}>
      <Eye size={17}/> {expanded?'Ocultar detalle':'Ver detalle'}
     </button>
-    <button
-     className="delete-button-small"
-     onClick={()=>remove(o)}
-     style={{cursor:'pointer',width:38,height:38,padding:0,display:'inline-flex',alignItems:'center',justifyContent:'center'}}
-     title="Eliminar pedido"
-     aria-label="Eliminar pedido"
-    >
-     <Trash2 size={17}/>
+    <button className="delete-button-small" onClick={()=>remove(o)} style={{cursor:'pointer'}}>
+     <Trash2 size={17}/> Eliminar
     </button>
    </div>
 
@@ -593,15 +580,15 @@ function Orders({orders,setOrders,products,payments,remote,history=false}:any){
 function Categories({categories,setCategories,remote,refresh}:any){
  const[n,sn]=useState(''),[e,se]=useState('🛍️'),[busy,setBusy]=useState(false)
  const add=async()=>{if(!n.trim())return;setBusy(true);try{if(remote){const r=await createCategory({name:n.trim(),emoji:e||'🛍️'});if(r.error){alert('No se pudo crear: '+r.error.message);return}await refresh()}else setCategories((x:Category[])=>[...x,{id:uid('cat'),name:n,emoji:e}]);alert('✅ Categoría guardada con éxito.');sn('')}finally{setBusy(false)}}
- const remove=async(id:string)=>{if(!confirm('¿Seguro que quiere eliminar esta categoría? Esta acción no se puede deshacer.'))return;if(remote){const r=await deleteCategory(id);if(r.error){alert('No se pudo eliminar: '+r.error.message);return}await refresh()}else setCategories((x:Category[])=>x.filter(a=>a.id!==id));alert('✅ Categoría eliminada con éxito.')}
- return <><div className="admin-page-head"><div><span className="mini-title">{remote?'Supabase conectado':'Modo local'}</span><h1>Categorías</h1></div></div><div className="admin-two-col"><div className="admin-panel form-section"><label>Emoji<input value={e} onChange={x=>se(x.target.value)}/></label><label>Nombre<input value={n} onChange={x=>sn(x.target.value)}/></label><button className="primary-button" disabled={busy} onClick={add}>{busy?'Guardando...':'Agregar'}</button></div><div className="admin-panel">{categories.map((c:Category)=><div className="list-manage-row" key={c.id}><span>{c.emoji}</span><strong>{c.name}</strong><button className="danger-icon" onClick={()=>remove(c.id)} title="Eliminar categoría" aria-label="Eliminar categoría"><Trash2 size={17}/></button></div>)}</div></div></>
+ const remove=async(id:string)=>{if(!confirm('¿Eliminar categoría?'))return;if(remote){const r=await deleteCategory(id);if(r.error){alert('No se pudo eliminar: '+r.error.message);return}await refresh()}else setCategories((x:Category[])=>x.filter(a=>a.id!==id));alert('✅ Categoría eliminada con éxito.')}
+ return <><div className="admin-page-head"><div><span className="mini-title">{remote?'Supabase conectado':'Modo local'}</span><h1>Categorías</h1></div></div><div className="admin-two-col"><div className="admin-panel form-section"><label>Emoji<input value={e} onChange={x=>se(x.target.value)}/></label><label>Nombre<input value={n} onChange={x=>sn(x.target.value)}/></label><button className="primary-button" disabled={busy} onClick={add}>{busy?'Guardando...':'Agregar'}</button></div><div className="admin-panel">{categories.map((c:Category)=><div className="list-manage-row" key={c.id}><span>{c.emoji}</span><strong>{c.name}</strong><button className="danger-icon" onClick={()=>remove(c.id)}><Trash2/></button></div>)}</div></div></>
 }
 function Providers({providers,setProviders,remote}:any){
  const[n,sn]=useState(''),[p,sp]=useState(''),[busy,setBusy]=useState(false)
  const refresh=async()=>{const r=await adminGetProviders();if(!r.error)setProviders((r.data||[]).map(mapProvider))}
  const add=async()=>{if(!n.trim())return;setBusy(true);if(remote){const r=await createProvider({name:n.trim(),phone:p});if(r.error){alert(r.error.message);setBusy(false);return}await refresh()}else setProviders((x:Provider[])=>[...x,{id:uid('prov'),name:n,phone:p}]);alert('✅ Proveedor guardado con éxito.');sn('');sp('');setBusy(false)}
- const remove=async(id:string)=>{if(!confirm('¿Seguro que quiere eliminar este proveedor? Esta acción no se puede deshacer.'))return;if(remote){const r=await deleteProvider(id);if(r.error){alert(r.error.message);return}await refresh()}else setProviders((a:Provider[])=>a.filter(b=>b.id!==id));alert('✅ Proveedor eliminado con éxito.')}
- return <><div className="admin-page-head"><div><span className="mini-title">{remote?'Supabase':'Local'}</span><h1>Proveedores</h1></div></div><div className="admin-two-col"><div className="admin-panel form-section"><label>Nombre<input value={n} onChange={x=>sn(x.target.value)}/></label><label>Teléfono<input value={p} onChange={x=>sp(x.target.value)}/></label><button className="primary-button" disabled={busy} onClick={add}>{busy?'Guardando...':'Agregar'}</button></div><div className="admin-panel">{providers.map((x:Provider)=><div className="list-manage-row provider-row" key={x.id}><div><strong>{x.name}</strong><span>{x.phone}</span></div><button className="danger-icon" onClick={()=>remove(x.id)} title="Eliminar proveedor" aria-label="Eliminar proveedor"><Trash2 size={17}/></button></div>)}</div></div></>
+ const remove=async(id:string)=>{if(!confirm('¿Eliminar proveedor?'))return;if(remote){const r=await deleteProvider(id);if(r.error){alert(r.error.message);return}await refresh()}else setProviders((a:Provider[])=>a.filter(b=>b.id!==id));alert('✅ Proveedor eliminado con éxito.')}
+ return <><div className="admin-page-head"><div><span className="mini-title">{remote?'Supabase':'Local'}</span><h1>Proveedores</h1></div></div><div className="admin-two-col"><div className="admin-panel form-section"><label>Nombre<input value={n} onChange={x=>sn(x.target.value)}/></label><label>Teléfono<input value={p} onChange={x=>sp(x.target.value)}/></label><button className="primary-button" disabled={busy} onClick={add}>{busy?'Guardando...':'Agregar'}</button></div><div className="admin-panel">{providers.map((x:Provider)=><div className="list-manage-row provider-row" key={x.id}><div><strong>{x.name}</strong><span>{x.phone}</span></div><button className="danger-icon" onClick={()=>remove(x.id)}><Trash2/></button></div>)}</div></div></>
 }
 
 function Payments({payments,setPayments,remote}:any){
