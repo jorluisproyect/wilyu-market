@@ -1,133 +1,54 @@
-# Wilyu Market
+# Wilyu Market V2
 
-Full-stack multi-category e-commerce platform built for a real reseller / on-demand sales business model.
+## Incluye
+- Carga de fotos desde teléfono o PC.
+- Costo privado + 30% automático / margen personalizado / precio final.
+- Métodos de pago configurables por la administradora.
+- Pago Móvil, transferencia, PayPal, Binance/USDT u otros.
+- Moneda base USD y equivalencias EUR, VES y USDT.
+- Tasas manuales y botón de actualización online de referencia.
+- Seguimiento "Ve tu pedido" con código y ruta animada.
+- Estados: recibido, pago confirmado, solicitando productos, preparando, en camino y entregado.
+- WhatsApp conectado a +58 412-5427074.
+- PDF tipo nota de pedido/entrega descargado al registrar el pedido.
+- Panel responsive.
 
-**Live demo:** https://wilyu-market.netlify.app
+## Ejecutar
+En PowerShell:
 
-## Overview
+npm.cmd install
+npm.cmd run dev
 
-Wilyu Market was designed to let a reseller sell products from multiple suppliers without depending on a traditional inventory model. The platform combines a public storefront, customer accounts, guest checkout, multi-currency pricing, order tracking and a protected administration panel connected to Supabase.
+## Importante
+Esta V2 guarda datos e imágenes localmente en el navegador para pruebas. Para que la clienta administre desde cualquier teléfono o laptop y los clientes vean el mismo catálogo/estatus, el siguiente paso es conectar Supabase Database + Storage + Auth.
 
-## Main Features
+La tasa online incluida es una referencia pública. Antes de producción conviene mover la consulta de tasas al backend y validar VES contra una fuente oficial/confiable; además se debe guardar la tasa usada al momento de cada pedido.
 
-- Responsive storefront for desktop, tablet and mobile
-- Dynamic product catalog and categories
-- Products available, by order, sold out or hidden
-- Private product cost management
-- Automatic 30% profit calculation or custom margin / final price
-- Supplier management
-- Product image upload with Supabase Storage
-- USD base pricing with EUR, VES and USDT references
-- Configurable payment methods
-- Guest checkout
-- Optional customer registration
-- Email-confirmed accounts through Supabase Auth
-- Saved customer profile data
-- Purchase history
-- Admin role validation
-- Order management
-- Public order tracking by unique `WY-...` code
-- Visual delivery status route
-- WhatsApp integration
-- PDF-style order receipt workflow
-- Row Level Security policies in Supabase
-- Netlify production deployment
+PayPal y Binance automáticos requieren integración segura del lado del servidor. Nunca coloques secretos o API keys dentro del frontend React.
 
-## Tech Stack
 
-### Frontend
-- React
-- TypeScript
-- Vite
-- CSS
-- Lucide React
+## V3
+- Precio en bolívares destacado en tarjetas de productos, detalle, carrito y checkout.
+- La tienda intenta actualizar USD→EUR y USD→VES automáticamente al abrir, si la última actualización tiene más de 6 horas.
+- La administradora mantiene la opción de actualizar manualmente o introducir una tasa manual.
+- USDT se mantiene 1:1 con USD como referencia en esta versión.
 
-### Backend & Data
-- Supabase
-- PostgreSQL
-- Supabase Auth
-- Supabase Storage
-- Row Level Security (RLS)
 
-### Deployment
-- Netlify
+## V4 — cuentas opcionales de clientes
+- Registro opcional de comprador.
+- Inicio/cierre de sesión.
+- Perfil con nombre, correo, teléfono y dirección.
+- Checkout autocompletado para clientes registrados.
+- Historial de pedidos asociado al perfil.
+- Compra como invitado sigue disponible.
+- En esta versión de prueba las cuentas se guardan en localStorage.
+- Para producción se debe migrar la autenticación a Supabase Auth y los perfiles a la base de datos.
 
-## Database Model
 
-The production backend uses tables for:
-
-- `profiles`
-- `categories`
-- `products`
-- `product_images`
-- `providers`
-- `payment_methods`
-- `currency_rates`
-- `orders`
-- `order_items`
-- `store_settings`
-
-Product photos are stored in the `wilyu-products` Supabase Storage bucket.
-
-## Business Logic
-
-A product can have a private acquisition cost and an automatic margin. Example:
-
-```text
-Cost: $10.00
-Margin: 30%
-Sale price: $13.00
-```
-
-The administrator can also choose a custom percentage or final selling price.
-
-Orders can move through the following workflow:
-
-```text
-Pedido recibido
-→ Pago confirmado
-→ Solicitando productos
-→ Preparando
-→ En camino
-→ Entregado
-```
-
-Customers can track an order with its unique code without exposing private order data.
-
-## Local Development
-
-Create a `.env.local` file using `.env.example` as reference:
-
-```env
-VITE_SUPABASE_URL=your_supabase_project_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
-
-Then run:
-
-```bash
-npm install
-npm run dev
-```
-
-Production build:
-
-```bash
-npm run build
-```
-
-## Security
-
-- No `service_role` key is used in the frontend.
-- Admin access is validated through the `profiles.role` field.
-- Database operations are protected by Supabase RLS policies.
-- Product images are public for reading, while upload/update/delete operations are restricted to authenticated administrators.
-- Secrets and local environment files are excluded from Git.
-
-## Project Goal
-
-This project demonstrates the complete process of turning real business requirements into a deployed full-stack product: requirements analysis, UI/UX, frontend development, data modeling, authentication, authorization, storage, pricing logic, order workflows and production deployment.
-
----
-
-Developed as a real-world e-commerce case study by Jorge Luis Añanguren.
+## V5 — registro visible
+- Botón explícito “Iniciar sesión” en escritorio.
+- Botón explícito “Regístrate” en escritorio.
+- Opciones visibles también en el menú móvil.
+- Bloque promocional en Inicio con beneficios del registro.
+- Acceso directo a registro o login según el botón seleccionado.
+- Una vez autenticado, el acceso cambia a “Mi cuenta”.
